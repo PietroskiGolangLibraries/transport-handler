@@ -46,6 +46,13 @@ func NewHandler(stopServerSig chan error, exiter func(int)) Handler {
 	}
 }
 
+func NewDefaultHandler() Handler {
+	return &handler{
+		stopServerSig: privateStopServerSig,
+		osExit:        OsExit,
+	}
+}
+
 // StartServers starts all the variadic given servers and blocks the main thread.
 func (h *handler) StartServers(servers ...handlers_model.Server) {
 	for _, s := range servers {
