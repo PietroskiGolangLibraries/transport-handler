@@ -1,5 +1,3 @@
-//go:build unittest
-
 package transporthandler
 
 import (
@@ -43,6 +41,30 @@ func TestNewHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.want(tt.setup())
+		})
+	}
+}
+
+func TestNewDefaultHandler(t *testing.T) {
+	tests := []struct {
+		name      string
+		setup     func() Handler
+		assertion func(*testing.T, Handler)
+	}{
+		{
+			name: "returns a default handler",
+			setup: func() Handler {
+				h := NewDefaultHandler()
+				return h
+			},
+			assertion: func(t *testing.T, h Handler) {
+				require.NotNil(t, h)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(t, tt.setup())
 		})
 	}
 }

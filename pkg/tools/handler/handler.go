@@ -32,7 +32,10 @@ var (
 	privateStopServerSig = make(chan error)
 )
 
-func NewHandler(stopServerSig chan error, exiter func(int)) Handler {
+func NewHandler(
+	stopServerSig chan error,
+	exiter func(int),
+) Handler {
 	if stopServerSig == nil {
 		stopServerSig = privateStopServerSig
 	}
@@ -43,6 +46,13 @@ func NewHandler(stopServerSig chan error, exiter func(int)) Handler {
 	return &handler{
 		stopServerSig: stopServerSig,
 		osExit:        exiter,
+	}
+}
+
+func NewDefaultHandler() Handler {
+	return &handler{
+		stopServerSig: privateStopServerSig,
+		osExit:        OsExit,
 	}
 }
 
