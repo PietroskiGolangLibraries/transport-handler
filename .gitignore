@@ -1,0 +1,19 @@
+# IDEs configs
+.idea/
+.vscode/
+
+# vendor
+vendor/
+
+# envs
+.env
+.env.local
+.env.test
+.env.qa
+.env.production
+
+# builds
+build
+
+# cover profile
+cover.out
