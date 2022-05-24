@@ -3,119 +3,166 @@
 package transporthandler
 
 import (
+	"context"
+	"fmt"
+	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/models"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
+	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/worker"
 	"log"
 	"os"
-	"strings"
-
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 )
 
 type (
 	Handler interface {
 		StartServers(servers ...handlers_model.Server)
-
-		handleError()
-		handlePanic()
-		closeChan()
-		handleCloseChanPanic()
-		verifyCodeZero(r interface{})
 	}
 
 	handler struct {
-		stopServerSig chan error
-		osExit        func(code int)
+		ctx      context.Context
+		cancelFn context.CancelFunc
+
+		stopSrvSig  chan os.Signal
+		errSrvSig   chan error
+		panicSrvSig chan bool
+		osExit      func(code int)
+
+		sigChanMonitor   *worker.ChanMonitor
+		errChanMonitor   *worker.ChanMonitor
+		panicChanMonitor *worker.ChanMonitor
+
+		goPool goPool
+	}
+
+	goPool struct {
+		control int
+		goCount int64
+		wg      *sync.WaitGroup
+		mtx     *sync.Mutex
+		gst     tracer_models.Tracer
 	}
 )
 
 var (
-	OsExit               = os.Exit
-	privateStopServerSig = make(chan error)
+	privateStopSrvSig  = make(chan os.Signal)
+	privateErrSrvSig   = make(chan error)
+	privatePanicSrvSig = make(chan bool)
+	OsExit             = os.Exit
 )
 
-func NewHandler(
-	stopServerSig chan error,
-	exiter func(int),
+//func NewHandler(
+//	ctx context.Context,
+//	cancelFn context.CancelFunc,
+//	stopServerSig chan os.Signal,
+//	stopServerErrSig chan error,
+//	exiter func(int),
+//) Handler {
+//	ctx, cancelFn = handleCtxGen(ctx, cancelFn)
+//	stopServerSig, stopServerErrSig = handleStopChanGen(stopServerSig, stopServerErrSig)
+//
+//	if exiter == nil {
+//		exiter = OsExit
+//	}
+//
+//	return &handler{
+//		ctx:              ctx,
+//		cancelFn:         cancelFn,
+//		stopServerSig:    stopServerSig,
+//		stopServerErrSig: stopServerErrSig,
+//		osExit:           exiter,
+//		sysNotifier:      nil,
+//		chanMonitor:      worker.NewChanMonitor(),
+//		errChanMonitor:   worker.NewChanMonitor(),
+//		goPool: goPool{
+//			goCount: 0,
+//			wg:      &sync.WaitGroup{},
+//			mtx:     &sync.Mutex{},
+//			gst:     stack_tracer.NewGST(),
+//		},
+//	}
+//}
+
+func NewDefaultHandler(
+	ctx context.Context,
+	cancelFn context.CancelFunc,
 ) Handler {
-	if stopServerSig == nil {
-		stopServerSig = privateStopServerSig
-	}
-	if exiter == nil {
-		exiter = OsExit
-	}
+	ctx, cancelFn = handleCtxGen(ctx, cancelFn)
 
 	return &handler{
-		stopServerSig: stopServerSig,
-		osExit:        exiter,
-	}
-}
+		ctx:      ctx,
+		cancelFn: cancelFn,
 
-func NewDefaultHandler() Handler {
-	return &handler{
-		stopServerSig: privateStopServerSig,
-		osExit:        OsExit,
+		stopSrvSig:  privateStopSrvSig,
+		errSrvSig:   privateErrSrvSig,
+		panicSrvSig: privatePanicSrvSig,
+		osExit:      OsExit,
+
+		sigChanMonitor:   worker.NewChanMonitor(),
+		errChanMonitor:   worker.NewChanMonitor(),
+		panicChanMonitor: worker.NewChanMonitor(),
+
+		goPool: goPool{
+			goCount: 0,
+			wg:      &sync.WaitGroup{},
+			mtx:     &sync.Mutex{},
+			gst:     stack_tracer.NewGST(),
+		},
 	}
 }
 
 // StartServers starts all the variadic given servers and blocks the main thread.
 func (h *handler) StartServers(servers ...handlers_model.Server) {
+	signal.Notify(h.stopSrvSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	log.Println("Goroutine initial count ->", h.goPool.goCount)
 	for _, s := range servers {
-		go func(stopServerSig chan error, s handlers_model.Server) {
+		h.goPool.wg.Add(1)
+		go func(s handlers_model.Server) {
 			defer h.handlePanic()
-			if err := s.Start(); err != nil {
-				stopServerSig <- err
-			}
-		}(h.stopServerSig, s)
-	}
+			defer h.goPool.wg.Done()
 
-	h.handleError()
-}
-
-func (h *handler) handleError() {
-	for {
-		select {
-		case err := <-h.stopServerSig:
-			if err != nil {
-				h.closeChan()
-				log.Println(err)
-				h.osExit(1)
+			if s == nil {
 				return
 			}
+			if err := s.Start(); err != nil {
+				h.handleErr(err)
+			}
+		}(s)
+		time.Sleep(time.Millisecond * 125)
+	}
 
-			h.closeChan()
-			return
+	h.handleServer()
+}
+
+func (h *handler) handleServer() {
+	for {
+		select {
+		case <-h.stopSrvSig:
+			fmt.Println("\nstop server sig!!")
+			h.handleShutdown()
+			h.osExit(0)
+		case <-h.errSrvSig:
+			fmt.Println("\nerr server sig!!")
+			h.handleShutdown()
+			h.osExit(1)
+		case <-h.panicSrvSig:
+			fmt.Println("\npanic server sig!!")
+			h.handleShutdown()
+			h.osExit(2)
 		}
 	}
 }
 
-func (h *handler) handlePanic() {
-	if r := recover(); r != nil {
-		h.verifyCodeZero(r)
-		log.Printf("recovering from panic: %v", r)
-		//h.closeChan()
-		h.osExit(2)
-		h.stopServerSig <- nil
-	}
-}
-
-func (h *handler) closeChan() {
-	defer h.handleCloseChanPanic()
-
-	log.Println("closing channel...")
-	close(h.stopServerSig)
-	log.Println("channel successfully closed.")
-}
-
-func (h *handler) handleCloseChanPanic() {
-	if r := recover(); r != nil {
-		h.verifyCodeZero(r)
-		log.Printf("recovering from close channel panic: %v", r)
-		h.osExit(2)
-	}
-}
-
-func (h *handler) verifyCodeZero(r interface{}) {
-	str, ok := r.(string)
-	if ok && strings.Contains(str, "os.Exit(0)") {
-		h.osExit(0)
-	}
+func (h *handler) handleShutdown() {
+	h.sigKill()
+	h.handleWaiting()
+	h.closeSrvSigChan()
+	time.Sleep(time.Millisecond * 500)
+	h.closeErrChan()
+	time.Sleep(time.Millisecond * 500)
+	h.closePanicChan()
+	h.goPool.gst.Trace()
 }

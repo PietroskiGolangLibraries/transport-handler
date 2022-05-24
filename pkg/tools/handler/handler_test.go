@@ -1,13 +1,16 @@
 package transporthandler
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang/mock/gomock"
 	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit"
 	os_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/models"
 	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 	"os"
 	"os/exec"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +32,13 @@ func TestNewHandler(t *testing.T) {
 		{
 			name: "new handler initialisation",
 			setup: func() Handler {
-				h := NewHandler(nil, nil)
+				h := NewHandler(
+					nil,
+					nil,
+					nil,
+					nil,
+					nil,
+				)
 
 				return h
 			},
@@ -54,7 +63,8 @@ func TestNewDefaultHandler(t *testing.T) {
 		{
 			name: "returns a default handler",
 			setup: func() Handler {
-				h := NewDefaultHandler()
+				ctx, cancel := context.WithCancel(context.Background())
+				h := NewDefaultHandler(ctx, cancel)
 				return h
 			},
 			assertion: func(t *testing.T, h Handler) {
@@ -76,10 +86,11 @@ func Test_handler_StartServers(t *testing.T) {
 		assertion func(h Handler, servers ...handlers_model.Server)
 	}{
 		{
-			name: "",
+			name: "server should panic and exit with code 0",
 			setup: func() (Handler, []handlers_model.Server) {
 				ms := &mth.MockedRunningServer{}
-				h := NewHandler(nil, OsExit)
+				ctx, cancel := context.WithCancel(context.Background())
+				h := NewHandler(ctx, cancel, nil, nil, OsExit)
 
 				return h, []handlers_model.Server{ms}
 			},
@@ -97,10 +108,10 @@ func Test_handler_StartServers(t *testing.T) {
 			},
 		},
 		{
-			name: "",
+			name: "server should panic and exit with code 2",
 			setup: func() (Handler, []handlers_model.Server) {
 				ms := &mth.MockedErrServer{}
-				h := NewHandler(nil, OsExit)
+				h := NewHandler(nil, nil, nil, nil, OsExit)
 
 				return h, []handlers_model.Server{ms}
 			},
@@ -137,10 +148,16 @@ func Test_handler_StartServersAgain(t *testing.T) {
 		{
 			name: "returns error on starting the server",
 			setup: func(exiter os_models.Exiter) *handler {
+				ctx, cancelFn := context.WithCancel(context.Background())
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					ctx:              ctx,
+					cancelFn:         cancelFn,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
+					wg:               &sync.WaitGroup{},
+					gst:              stack_tracer.NewGST(),
 				}
 
 				return h
@@ -160,10 +177,18 @@ func Test_handler_StartServersAgain(t *testing.T) {
 		{
 			name: "panics on starting the server",
 			setup: func(exiter os_models.Exiter) *handler {
+				ctx, cancelFn := context.WithCancel(context.Background())
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					ctx:              ctx,
+					cancelFn:         cancelFn,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
+					sysNotifier:      nil,
+					wg:               &sync.WaitGroup{},
+					threadCount:      0,
+					gst:              stack_tracer.NewGST(),
 				}
 
 				return h
@@ -207,10 +232,16 @@ func Test_handler_StartServersAgainWithAutoGenMocks(t *testing.T) {
 		{
 			name: "returns error on starting the server",
 			setup: func(exiter os_models.Exiter) *handler {
+				ctx, cancelFn := context.WithCancel(context.Background())
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					ctx:              ctx,
+					cancelFn:         cancelFn,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
+					wg:               &sync.WaitGroup{},
+					gst:              stack_tracer.NewGST(),
 				}
 
 				return h
@@ -233,10 +264,16 @@ func Test_handler_StartServersAgainWithAutoGenMocks(t *testing.T) {
 		{
 			name: "panics on starting the server",
 			setup: func(exiter os_models.Exiter) *handler {
+				ctx, cancelFn := context.WithCancel(context.Background())
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					ctx:              ctx,
+					cancelFn:         cancelFn,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
+					wg:               &sync.WaitGroup{},
+					gst:              stack_tracer.NewGST(),
 				}
 
 				return h
@@ -273,7 +310,7 @@ func Test_handler_StartServersAgainWithAutoGenMocks(t *testing.T) {
 
 func TestPanicStart(t *testing.T) {
 	ms := &mth.MockedPanicServer{}
-	h := NewHandler(nil, OsExit)
+	h := NewHandler(nil, nil, nil, nil, OsExit)
 
 	// Run the crashing code when FLAG is set
 	if os.Getenv("FLAG") == "2" {
@@ -294,7 +331,7 @@ func TestPanicStart(t *testing.T) {
 
 func TestErrStart(t *testing.T) {
 	ms := &mth.MockedErrServer{}
-	h := NewHandler(nil, OsExit)
+	h := NewHandler(nil, nil, nil, nil, OsExit)
 
 	// Run the crashing code when FLAG is set
 	if os.Getenv("FLAG") == "1" {
@@ -315,7 +352,7 @@ func TestErrStart(t *testing.T) {
 
 func TestRunningStart(t *testing.T) {
 	ms := &mth.MockedRunningServer{}
-	h := NewHandler(nil, OsExit)
+	h := NewHandler(nil, nil, nil, nil, OsExit)
 
 	// Run the crashing code when FLAG is set
 	if os.Getenv("FLAG") == "0" {
@@ -345,8 +382,9 @@ func Test_handler_closeChan_and_handleCloseChanPanic(t *testing.T) {
 			setup: func(exiter os_models.Exiter) *handler {
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
 				}
 
 				return h
@@ -359,7 +397,7 @@ func Test_handler_closeChan_and_handleCloseChanPanic(t *testing.T) {
 					Return()
 			},
 			assertion: func(h *handler, fn func()) {
-				close(h.stopServerSig)
+				close(h.stopServerErrSig)
 				fn()
 			},
 		},
@@ -368,8 +406,9 @@ func Test_handler_closeChan_and_handleCloseChanPanic(t *testing.T) {
 			setup: func(exiter os_models.Exiter) *handler {
 				chanToPanic := make(chan error)
 				h := &handler{
-					stopServerSig: chanToPanic,
-					osExit:        exiter.Exit,
+					stopServerSig:    privateStopServerSig,
+					stopServerErrSig: chanToPanic,
+					osExit:           exiter.Exit,
 				}
 
 				return h
@@ -401,7 +440,7 @@ func Test_handler_verifyCodeZero(t *testing.T) {
 		{
 			name: "testing code zero",
 			setup: func(exiter os_models.Exiter) (Handler, interface{}) {
-				h := NewHandler(nil, exiter.Exit)
+				h := NewHandler(nil, nil, nil, nil, exiter.Exit)
 				r := "os.Exit(0)"
 				return h, r
 			},
@@ -419,7 +458,7 @@ func Test_handler_verifyCodeZero(t *testing.T) {
 		{
 			name: "testing non code zero - do not call exit",
 			setup: func(exiter os_models.Exiter) (Handler, interface{}) {
-				h := NewHandler(nil, exiter.Exit)
+				h := NewHandler(nil, nil, nil, nil, exiter.Exit)
 				r := "os.Exit(1)"
 				return h, r
 			},

@@ -14,3 +14,9 @@ test-unit-cover:
 
 test-unit-cover-report:
 	go tool cover -html=./docs/reports/tests/unit/cover.out
+
+gen-goroutine-profile:
+	go tool pprof --pdf ./pprof/goroutine.pprof > ./docs/reports/profiling/goroutine-profiling.pdf
+
+gen-threadcreation-profile:
+	go tool pprof --pdf ./pprof/threadcreation.pprof > ./docs/reports/profiling/threadcreation-profiling.pdf

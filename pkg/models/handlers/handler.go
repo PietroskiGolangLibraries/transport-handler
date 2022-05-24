@@ -4,5 +4,6 @@ type (
 	Server interface {
 		Handle()
 		Start() error
+		//Stop()
 	}
 )
