@@ -1,4 +1,4 @@
-package checker
+package unsafe_checker
 
 import (
 	"unsafe"
