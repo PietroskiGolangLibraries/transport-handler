@@ -4,11 +4,11 @@ package transporthandler
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/profile"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/models"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -19,6 +19,7 @@ import (
 type (
 	Handler interface {
 		StartServers(servers ...handlers_model.Server)
+		Cancel()
 	}
 
 	Profiler interface {
@@ -52,9 +53,9 @@ type (
 )
 
 var (
-	privateStopSrvSig  = make(chan os.Signal)
-	privateErrSrvSig   = make(chan error)
-	privatePanicSrvSig = make(chan bool)
+	makeStopSrvSig = func() chan os.Signal {
+		return make(chan os.Signal)
+	}
 
 	makeErrSrvSig = func(n int) chan error {
 		return make(chan error, n)
@@ -66,43 +67,32 @@ var (
 	OsExit = os.Exit
 )
 
-//func NewHandler(
-//	ctx context.Context,
-//	cancelFn context.CancelFunc,
-//	stopServerSig chan os.Signal,
-//	stopServerErrSig chan error,
-//	exiter func(int),
-//) Handler {
-//	ctx, cancelFn = handleCtxGen(ctx, cancelFn)
-//	stopServerSig, stopServerErrSig = handleStopChanGen(stopServerSig, stopServerErrSig)
-//
-//	if exiter == nil {
-//		exiter = OsExit
-//	}
-//
-//	return &handler{
-//		ctx:              ctx,
-//		cancelFn:         cancelFn,
-//		stopServerSig:    stopServerSig,
-//		stopServerErrSig: stopServerErrSig,
-//		osExit:           exiter,
-//		sysNotifier:      nil,
-//		chanMonitor:      worker.NewChanMonitor(),
-//		errChanMonitor:   worker.NewChanMonitor(),
-//		goPool: goPool{
-//			goCount: 0,
-//			wg:      &sync.WaitGroup{},
-//			mtx:     &sync.Mutex{},
-//			gst:     stack_tracer.NewGST(),
-//		},
-//	}
-//}
-
-func NewDefaultHandler(
+func NewHandler(
 	ctx context.Context,
 	cancelFn context.CancelFunc,
+	prof Profiler,
+	exiter func(int),
 ) Handler {
 	ctx, cancelFn = handleCtxGen(ctx, cancelFn)
+
+	return &handler{
+		ctx:      ctx,
+		cancelFn: cancelFn,
+		osExit:   exiter,
+
+		profiler: profiler{
+			pprof: prof,
+		},
+
+		goPool: goPool{
+			wg:  &sync.WaitGroup{},
+			gst: stack_tracer.NewGST(),
+		},
+	}
+}
+
+func NewDefaultHandler() Handler {
+	ctx, cancelFn := handleCtxGen(nil, nil)
 
 	return &handler{
 		ctx:      ctx,
@@ -110,7 +100,10 @@ func NewDefaultHandler(
 		osExit:   OsExit,
 
 		profiler: profiler{
-			pprof: profile.Start(profile.GoroutineProfile, profile.ProfilePath("./profiling/pprof")),
+			pprof: profile.Start(
+				profile.GoroutineProfile,
+				profile.ProfilePath("./profiling/pprof"),
+			),
 		},
 
 		goPool: goPool{
@@ -144,17 +137,25 @@ func (h *handler) handleServer() {
 	for {
 		select {
 		case <-h.srvChan.stopSig:
-			fmt.Println("\nstop server sig!!")
+			log.Println("\nstop server sig!!")
 			h.handleShutdown()
 			h.osExit(0)
+			return
 		case <-h.srvChan.errSig:
-			fmt.Println("\nerr server sig!!")
+			log.Println("\nerr server sig!!")
 			h.handleShutdown()
 			h.osExit(1)
+			return
 		case <-h.srvChan.panicSig:
-			fmt.Println("\npanic server sig!!")
+			log.Println("\npanic server sig!!")
 			h.handleShutdown()
 			h.osExit(2)
+			return
+		case <-h.ctx.Done():
+			log.Println("\nctx server sig!!")
+			h.handleShutdown()
+			h.osExit(0)
+			return
 		}
 	}
 }
@@ -170,4 +171,8 @@ func (h *handler) handleShutdown() {
 	h.closePanicChan()
 	h.goPool.gst.Trace()
 	h.profiler.pprof.Stop()
+}
+
+func (h *handler) Cancel() {
+	h.cancelFn()
 }

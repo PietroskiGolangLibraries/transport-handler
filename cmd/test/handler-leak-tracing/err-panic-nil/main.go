@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
+	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit/fake"
+	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
 	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/handler"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 )
@@ -30,7 +32,12 @@ func main() {
 	sErr4 := &mocked_transport_handlers.MockedErrServer{}
 	sErr5 := &mocked_transport_handlers.MockedErrServer{}
 
-	h := transporthandler.NewDefaultHandler(ctx, cancel)
+	h := transporthandler.NewHandler(
+		ctx,
+		cancel,
+		fakepprof.NewFakePProfProfiler(),
+		fake.Exit,
+	)
 	h.StartServers(
 		svr1, svr2, svr3, svr4, svr5,
 		sErr1, sErr2, sErr3, sErr4, sErr5,

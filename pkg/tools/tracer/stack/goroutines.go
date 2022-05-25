@@ -2,13 +2,11 @@ package stack_tracer
 
 import (
 	"fmt"
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/models"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
 	"runtime"
 )
 
-type goroutineStackTracer struct {
-	//
-}
+type goroutineStackTracer struct{}
 
 func NewGoroutineStackTracer() tracer_models.Tracer {
 	tracer := &goroutineStackTracer{}

@@ -9,7 +9,7 @@ import (
 
 func (h *handler) makeSrvChan(srvLen int) {
 	h.srvChan = srvChan{
-		stopSig:  privateStopSrvSig,
+		stopSig:  makeStopSrvSig(),
 		errSig:   makeErrSrvSig(srvLen),
 		panicSig: makePanicSrvSig(srvLen),
 	}
@@ -51,6 +51,7 @@ func (h *handler) handleCloseChanPanic() {
 		log.Printf("recovering from close channel panic: %v", r)
 		h.goPool.gst.Trace()
 		h.osExit(2)
+		return
 	}
 }
 
@@ -79,10 +80,7 @@ func (h *handler) handlePanic() {
 }
 
 func (h *handler) sigKill() {
-	err := syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
-	if err != nil {
-		log.Printf("failed to send a quit seignal into the system: %v", err)
-	}
+	_ = syscall.Kill(syscall.Getpid(), syscall.SIGQUIT)
 }
 
 func handleCtxGen(ctx context.Context, cancelFn context.CancelFunc) (context.Context, context.CancelFunc) {

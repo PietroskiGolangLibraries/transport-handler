@@ -17,6 +17,7 @@ build
 
 # cover profile
 cover.out
+cover-all.out
 
 # profiling data
 *.pprof
