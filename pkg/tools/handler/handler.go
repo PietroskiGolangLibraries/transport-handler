@@ -4,14 +4,13 @@ package transporthandler
 
 import (
 	"context"
+	"github.com/pkg/profile"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/pkg/profile"
 
 	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
@@ -129,7 +128,7 @@ func (h *handler) StartServers(servers map[string]handlers_model.Server) {
 				h.handleErr(err)
 			}
 		}(s)
-		time.Sleep(time.Millisecond * 125)
+		time.Sleep(time.Millisecond * 50)
 	}
 
 	h.handleServer()
@@ -165,11 +164,8 @@ func (h *handler) handleServer() {
 func (h *handler) handleShutdown() {
 	h.sigKill()
 	h.handleWaiting()
-	time.Sleep(time.Millisecond * 250)
 	h.closeSrvSigChan()
-	time.Sleep(time.Millisecond * 250)
 	h.closeErrChan()
-	time.Sleep(time.Millisecond * 250)
 	h.closePanicChan()
 	h.goPool.gst.Trace()
 	h.profiler.pprof.Stop()
