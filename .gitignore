@@ -19,4 +19,5 @@ build
 cover.out
 
 # profiling data
-.pprof
+*.pprof
+profiling

@@ -110,7 +110,7 @@ func NewDefaultHandler(
 		osExit:   OsExit,
 
 		profiler: profiler{
-			pprof: profile.Start(profile.GoroutineProfile, profile.ProfilePath("./pprof")),
+			pprof: profile.Start(profile.GoroutineProfile, profile.ProfilePath("./profiling/pprof")),
 		},
 
 		goPool: goPool{
