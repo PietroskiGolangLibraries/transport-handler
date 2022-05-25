@@ -24,4 +24,4 @@ gen-threadcreation-profile:
 profiling: gen-goroutine-profile gen-threadcreation-profile
 
 run-main-test:
-	go run cmd/test/handler-leak-tracing/main.go
+	go run -rave cmd/test/handler-leak-tracing/err-and-panic/main.go

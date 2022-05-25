@@ -35,5 +35,6 @@ func main() {
 		svr1, svr2, svr3, svr4, svr5,
 		sErr1, sErr2, sErr3, sErr4, sErr5,
 		sPanic1, sPanic2, sPanic3, sPanic4, sPanic5,
+		nil, nil, nil, nil, nil,
 	)
 }
