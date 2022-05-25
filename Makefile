@@ -20,3 +20,8 @@ gen-goroutine-profile:
 
 gen-threadcreation-profile:
 	go tool pprof --pdf ./pprof/threadcreation.pprof > ./docs/reports/profiling/threadcreation-profiling.pdf
+
+profiling: gen-goroutine-profile gen-threadcreation-profile
+
+run-main-test:
+	go run cmd/test/handler-leak-tracing/main.go

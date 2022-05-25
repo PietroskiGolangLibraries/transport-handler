@@ -8,8 +8,6 @@ import (
 )
 
 func main() {
-	//defer profile.Start(profile.GoroutineProfile, profile.ThreadcreationProfile, profile.ProfilePath("./pprof")).Stop()
-
 	st := stack_tracer.NewGoroutineStackTracer()
 	st.Trace()
 	defer st.Trace()
@@ -21,11 +19,6 @@ func main() {
 	svr3 := mocked_transport_handlers.NewMockedNamedRunningServer("server-3")
 	svr4 := mocked_transport_handlers.NewMockedNamedRunningServer("server-4")
 	svr5 := mocked_transport_handlers.NewMockedNamedRunningServer("server-5")
-	sPanic1 := &mocked_transport_handlers.MockedPanicServer{}
-	sPanic2 := &mocked_transport_handlers.MockedPanicServer{}
-	sPanic3 := &mocked_transport_handlers.MockedPanicServer{}
-	sPanic4 := &mocked_transport_handlers.MockedPanicServer{}
-	sPanic5 := &mocked_transport_handlers.MockedPanicServer{}
 	sErr1 := &mocked_transport_handlers.MockedErrServer{}
 	sErr2 := &mocked_transport_handlers.MockedErrServer{}
 	sErr3 := &mocked_transport_handlers.MockedErrServer{}
@@ -36,7 +29,5 @@ func main() {
 	h.StartServers(
 		svr1, svr2, svr3, svr4, svr5,
 		sErr1, sErr2, sErr3, sErr4, sErr5,
-		sPanic1, sPanic2, sPanic3, sPanic4, sPanic5,
-		nil, nil, nil, nil, nil,
 	)
 }

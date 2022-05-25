@@ -5,11 +5,10 @@ package transporthandler
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/profile"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/models"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/worker"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -22,28 +21,33 @@ type (
 		StartServers(servers ...handlers_model.Server)
 	}
 
-	handler struct {
-		ctx      context.Context
-		cancelFn context.CancelFunc
+	Profiler interface {
+		Stop()
+	}
 
-		stopSrvSig  chan os.Signal
-		errSrvSig   chan error
-		panicSrvSig chan bool
-		osExit      func(code int)
-
-		sigChanMonitor   *worker.ChanMonitor
-		errChanMonitor   *worker.ChanMonitor
-		panicChanMonitor *worker.ChanMonitor
-
-		goPool goPool
+	profiler struct {
+		pprof Profiler
 	}
 
 	goPool struct {
-		control int
-		goCount int64
-		wg      *sync.WaitGroup
-		mtx     *sync.Mutex
-		gst     tracer_models.Tracer
+		wg  *sync.WaitGroup
+		gst tracer_models.Tracer
+	}
+
+	srvChan struct {
+		stopSig  chan os.Signal
+		errSig   chan error
+		panicSig chan bool
+	}
+
+	handler struct {
+		ctx      context.Context
+		cancelFn context.CancelFunc
+		osExit   func(code int)
+
+		goPool   goPool
+		srvChan  srvChan
+		profiler profiler
 	}
 )
 
@@ -51,7 +55,15 @@ var (
 	privateStopSrvSig  = make(chan os.Signal)
 	privateErrSrvSig   = make(chan error)
 	privatePanicSrvSig = make(chan bool)
-	OsExit             = os.Exit
+
+	makeErrSrvSig = func(n int) chan error {
+		return make(chan error, n)
+	}
+	makePanicSrvSig = func(n int) chan bool {
+		return make(chan bool, n)
+	}
+
+	OsExit = os.Exit
 )
 
 //func NewHandler(
@@ -95,38 +107,29 @@ func NewDefaultHandler(
 	return &handler{
 		ctx:      ctx,
 		cancelFn: cancelFn,
+		osExit:   OsExit,
 
-		stopSrvSig:  privateStopSrvSig,
-		errSrvSig:   privateErrSrvSig,
-		panicSrvSig: privatePanicSrvSig,
-		osExit:      OsExit,
-
-		sigChanMonitor:   worker.NewChanMonitor(),
-		errChanMonitor:   worker.NewChanMonitor(),
-		panicChanMonitor: worker.NewChanMonitor(),
+		profiler: profiler{
+			pprof: profile.Start(profile.GoroutineProfile, profile.ProfilePath("./pprof")),
+		},
 
 		goPool: goPool{
-			goCount: 0,
-			wg:      &sync.WaitGroup{},
-			mtx:     &sync.Mutex{},
-			gst:     stack_tracer.NewGST(),
+			wg:  &sync.WaitGroup{},
+			gst: stack_tracer.NewGST(),
 		},
 	}
 }
 
 // StartServers starts all the variadic given servers and blocks the main thread.
 func (h *handler) StartServers(servers ...handlers_model.Server) {
-	signal.Notify(h.stopSrvSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-	log.Println("Goroutine initial count ->", h.goPool.goCount)
+	h.makeSrvChan(len(servers))
+	signal.Notify(h.srvChan.stopSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	for _, s := range servers {
 		h.goPool.wg.Add(1)
 		go func(s handlers_model.Server) {
 			defer h.handlePanic()
 			defer h.goPool.wg.Done()
 
-			if s == nil {
-				return
-			}
 			if err := s.Start(); err != nil {
 				h.handleErr(err)
 			}
@@ -140,15 +143,15 @@ func (h *handler) StartServers(servers ...handlers_model.Server) {
 func (h *handler) handleServer() {
 	for {
 		select {
-		case <-h.stopSrvSig:
+		case <-h.srvChan.stopSig:
 			fmt.Println("\nstop server sig!!")
 			h.handleShutdown()
 			h.osExit(0)
-		case <-h.errSrvSig:
+		case <-h.srvChan.errSig:
 			fmt.Println("\nerr server sig!!")
 			h.handleShutdown()
 			h.osExit(1)
-		case <-h.panicSrvSig:
+		case <-h.srvChan.panicSig:
 			fmt.Println("\npanic server sig!!")
 			h.handleShutdown()
 			h.osExit(2)
@@ -159,10 +162,12 @@ func (h *handler) handleServer() {
 func (h *handler) handleShutdown() {
 	h.sigKill()
 	h.handleWaiting()
+	time.Sleep(time.Millisecond * 250)
 	h.closeSrvSigChan()
-	time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * 250)
 	h.closeErrChan()
-	time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * 250)
 	h.closePanicChan()
 	h.goPool.gst.Trace()
+	h.profiler.pprof.Stop()
 }
