@@ -2,8 +2,9 @@ package stack_tracer
 
 import (
 	"fmt"
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
 	"runtime"
+
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
 )
 
 type goroutineStackTracer struct{}

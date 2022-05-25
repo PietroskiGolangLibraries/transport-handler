@@ -2,18 +2,20 @@ package transporthandler
 
 import (
 	"context"
+	"os"
+	"sync"
+	"syscall"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
 	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit/fake"
 	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof"
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
-	"os"
-	"sync"
-	"syscall"
-	"testing"
-	"time"
+	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 )
 
 func TestNewHandler(t *testing.T) {
@@ -109,7 +111,12 @@ func Test_handler_StartServers(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					h.StartServers(svr1, svr2)
+					h.StartServers(
+						map[string]handlers_model.Server{
+							"server-1": svr1,
+							"server-2": svr2,
+						},
+					)
 				}()
 
 				time.Sleep(time.Millisecond * 500)
@@ -139,8 +146,12 @@ func Test_handler_StartServers(t *testing.T) {
 				sErr2 := &mocked_transport_handlers.MockedErrServer{}
 
 				h.StartServers(
-					svr1, svr2,
-					sErr1, sErr2,
+					map[string]handlers_model.Server{
+						"server-1":  svr1,
+						"server-2":  svr2,
+						"err-srv-1": sErr1,
+						"err-srv-2": sErr2,
+					},
 				)
 			},
 		},
@@ -165,8 +176,12 @@ func Test_handler_StartServers(t *testing.T) {
 				sPanic2 := &mocked_transport_handlers.MockedPanicServer{}
 
 				h.StartServers(
-					svr1, svr2,
-					sPanic1, sPanic2,
+					map[string]handlers_model.Server{
+						"server-1":    svr1,
+						"server-2":    svr2,
+						"panic-srv-1": sPanic1,
+						"panic-srv-2": sPanic2,
+					},
 				)
 			},
 		},
@@ -195,7 +210,12 @@ func Test_handler_StartServers(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					h.StartServers(svr1, svr2)
+					h.StartServers(
+						map[string]handlers_model.Server{
+							"server-1": svr1,
+							"server-2": svr2,
+						},
+					)
 				}()
 
 				time.Sleep(time.Millisecond * 500)

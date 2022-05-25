@@ -4,21 +4,23 @@ package transporthandler
 
 import (
 	"context"
-	"github.com/pkg/profile"
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
-	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/pkg/profile"
+
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 )
 
 type (
 	Handler interface {
-		StartServers(servers ...handlers_model.Server)
+		StartServers(servers map[string]handlers_model.Server)
 		Cancel()
 	}
 
@@ -114,7 +116,7 @@ func NewDefaultHandler() Handler {
 }
 
 // StartServers starts all the variadic given servers and blocks the main thread.
-func (h *handler) StartServers(servers ...handlers_model.Server) {
+func (h *handler) StartServers(servers map[string]handlers_model.Server) {
 	h.makeSrvChan(len(servers))
 	signal.Notify(h.srvChan.stopSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	for _, s := range servers {

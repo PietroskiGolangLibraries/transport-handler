@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+
 	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit/fake"
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
+	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/handler"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 )
@@ -34,8 +36,17 @@ func main() {
 		fake.Exit,
 	)
 	h.StartServers(
-		svr1, svr2, svr3, svr4, svr5,
-		sPanic1, sPanic2, sPanic3, sPanic4, sPanic5,
-		//nil, nil, nil, nil, nil,
+		map[string]handlers_model.Server{
+			"server-1":    svr1,
+			"server-2":    svr2,
+			"server-3":    svr3,
+			"server-4":    svr4,
+			"server-5":    svr5,
+			"panic-srv-1": sPanic1,
+			"panic-srv-2": sPanic2,
+			"panic-srv-3": sPanic3,
+			"panic-srv-4": sPanic4,
+			"panic-srv-5": sPanic5,
+		},
 	)
 }
