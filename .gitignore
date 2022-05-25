@@ -17,3 +17,14 @@ build
 
 # cover profile
 cover.out
+cover-all.out
+
+# profiling data
+*.pprof
+profiling
+
+# general local generated reports
+.pdf
+
+# documentation reports - exclusion
+!docs/reports/profiling/pprof
