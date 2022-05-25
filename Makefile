@@ -38,6 +38,6 @@ profiling: gen-goroutine-profile gen-threadcreation-profile
 run-main-test:
 	go run -race cmd/test/handler-leak-tracing/manual-stopping/main.go
 
-TAG := $(cat VERSION)
+TAG := $(shell cat VERSION)
 tag:
-	git tag ${{TAG}}
+	git tag $(TAG)
