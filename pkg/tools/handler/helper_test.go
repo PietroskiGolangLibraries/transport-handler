@@ -2,12 +2,13 @@ package transporthandler
 
 import (
 	"context"
+	"sync"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit"
 	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
-	"sync"
-	"testing"
 )
 
 func Test_handler_handleCloseChanPanic(t *testing.T) {
