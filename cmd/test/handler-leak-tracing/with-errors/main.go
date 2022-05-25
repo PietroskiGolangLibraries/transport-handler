@@ -5,6 +5,7 @@ import (
 	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit/fake"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/handler"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 )
@@ -34,7 +35,17 @@ func main() {
 		fake.Exit,
 	)
 	h.StartServers(
-		svr1, svr2, svr3, svr4, svr5,
-		sErr1, sErr2, sErr3, sErr4, sErr5,
+		map[string]handlers_model.Server{
+			"server-1":  svr1,
+			"server-2":  svr2,
+			"server-3":  svr3,
+			"server-4":  svr4,
+			"server-5":  svr5,
+			"err-srv-1": sErr1,
+			"err-srv-2": sErr2,
+			"err-srv-3": sErr3,
+			"err-srv-4": sErr4,
+			"err-srv-5": sErr5,
+		},
 	)
 }

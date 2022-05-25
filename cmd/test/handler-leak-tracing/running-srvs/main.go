@@ -4,6 +4,7 @@ import (
 	"context"
 	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
 	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
 	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/handler"
 	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
 	"log"
@@ -43,7 +44,15 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		h.StartServers(svr1, svr2, svr3, svr4, svr5)
+		h.StartServers(
+			map[string]handlers_model.Server{
+				"server-1": svr1,
+				"server-2": svr2,
+				"server-3": svr3,
+				"server-4": svr4,
+				"server-5": svr5,
+			},
+		)
 	}()
 
 	time.Sleep(time.Second * 1)

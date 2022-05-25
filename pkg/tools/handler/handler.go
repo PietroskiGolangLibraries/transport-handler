@@ -18,7 +18,7 @@ import (
 
 type (
 	Handler interface {
-		StartServers(servers ...handlers_model.Server)
+		StartServers(servers map[string]handlers_model.Server)
 		Cancel()
 	}
 
@@ -114,7 +114,7 @@ func NewDefaultHandler() Handler {
 }
 
 // StartServers starts all the variadic given servers and blocks the main thread.
-func (h *handler) StartServers(servers ...handlers_model.Server) {
+func (h *handler) StartServers(servers map[string]handlers_model.Server) {
 	h.makeSrvChan(len(servers))
 	signal.Notify(h.srvChan.stopSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	for _, s := range servers {
