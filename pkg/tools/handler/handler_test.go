@@ -10,12 +10,12 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/handlers"
-	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit"
-	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/os/exit/fake"
-	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof"
-	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/mocks/profiling/pprof/fake"
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
+	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/handlers"
+	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/os/exit"
+	"gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/os/exit/fake"
+	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/profiling/pprof"
+	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/profiling/pprof/fake"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/handlers"
 )
 
 func TestNewHandler(t *testing.T) {

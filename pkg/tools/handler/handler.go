@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/handlers"
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
-	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/tools/tracer/stack"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/handlers"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/tracer"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/tools/tracer/stack"
 )
 
 type (

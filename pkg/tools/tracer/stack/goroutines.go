@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/tracer"
+	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/tracer"
 )
 
 type goroutineStackTracer struct{}

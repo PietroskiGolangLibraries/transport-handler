@@ -2,7 +2,7 @@ package pprof
 
 import (
 	"github.com/pkg/profile"
-	profiler_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/pkg/models/profiler"
+	profiler_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/profiler"
 )
 
 type (
