@@ -162,6 +162,7 @@ func (h *handler) handleServer() {
 }
 
 func (h *handler) handleShutdown() {
+	h.Cancel()
 	h.sigKill()
 	h.handleWaiting()
 	h.closeSrvSigChan()

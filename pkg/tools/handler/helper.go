@@ -84,9 +84,9 @@ func (h *handler) sigKill() {
 }
 
 func handleCtxGen(ctx context.Context, cancelFn context.CancelFunc) (context.Context, context.CancelFunc) {
-	if ctx == nil || cancelFn == nil {
+	if ctx == nil && cancelFn == nil {
 		ctx, cancelFn = context.WithCancel(context.Background())
-	} else if ctx != nil || cancelFn == nil {
+	} else if ctx != nil && cancelFn == nil {
 		ctx, cancelFn = context.WithCancel(ctx)
 	}
 
