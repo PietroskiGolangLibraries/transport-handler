@@ -22,9 +22,11 @@ cover-all.out
 # profiling data
 *.pprof
 profiling
+!pkg/mocks/profiling
+# profiling docs
+!docs/reports/profiling
 
 # general local generated reports
 .pdf
 
-# documentation reports - exclusion
-!docs/reports/profiling/pprof
+
