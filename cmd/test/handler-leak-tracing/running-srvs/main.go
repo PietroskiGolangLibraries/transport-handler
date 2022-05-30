@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -59,6 +58,4 @@ func main() {
 	time.Sleep(time.Second * 1)
 	_ = syscall.Kill(os.Getpid(), syscall.SIGQUIT)
 	wg.Wait()
-
-	log.Printf("goroutine count is: %v", runtime.NumGoroutine())
 }

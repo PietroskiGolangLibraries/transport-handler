@@ -9,20 +9,22 @@ import (
 )
 
 type MockedNamedRunningServer struct {
-	name string
-	ctx  context.Context
-	conn chan int
-	sig  chan os.Signal
-	wg   sync.WaitGroup
+	name      string
+	ctx       context.Context
+	conn      chan int
+	sig       chan os.Signal
+	ricouchet chan int
+	wg        sync.WaitGroup
 }
 
 func NewMockedNamedRunningServer(ctx context.Context, serverName string) *MockedNamedRunningServer {
 	svr := &MockedNamedRunningServer{
-		name: serverName,
-		ctx:  ctx,
-		conn: make(chan int),
-		sig:  make(chan os.Signal),
-		wg:   sync.WaitGroup{},
+		name:      serverName,
+		ctx:       ctx,
+		conn:      make(chan int),
+		sig:       make(chan os.Signal),
+		ricouchet: make(chan int),
+		wg:        sync.WaitGroup{},
 	}
 
 	svr.Handle()
@@ -40,13 +42,16 @@ func (svr *MockedNamedRunningServer) Start() error {
 	go func() {
 		defer svr.wg.Done()
 		log.Printf("server of name '%v' is up and running in a subprocess\n", svr.name)
-		<-svr.conn
+		svr.ricouchet <- <-svr.conn
 		log.Printf("server of name '%v' is stopping a subprocess\n", svr.name)
 		return
 	}()
 
-	svr.Stop()
-	return nil
+	select {
+	case <-svr.ricouchet:
+		log.Printf("server of name '%v' main-thread ricouchet signal\n", svr.name)
+		return nil
+	}
 }
 
 func (svr *MockedNamedRunningServer) Stop() {
@@ -56,8 +61,8 @@ func (svr *MockedNamedRunningServer) Stop() {
 	log.Printf("server of name '%v' waiting for subprocess to stop\n", svr.name)
 	svr.conn <- 0
 	svr.wg.Wait()
-	close(svr.conn)
 	log.Printf("server of name '%v' subprocess stopped\n", svr.name)
 	log.Printf("server of name '%v' closing sig channel\n", svr.name)
+	close(svr.conn)
 	log.Printf("server of name '%v' closed sig channel\n", svr.name)
 }

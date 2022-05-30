@@ -47,6 +47,9 @@ type (
 		cancelFn context.CancelFunc
 		osExit   func(code int)
 
+		srvMap        *sync.Map
+		serverMapping map[string]handlers_model.Server
+
 		goPool   goPool
 		srvChan  srvChan
 		profiler profiler
@@ -89,6 +92,8 @@ func NewHandler(
 			wg:  &sync.WaitGroup{},
 			gst: stack_tracer.NewGST(),
 		},
+
+		srvMap: &sync.Map{},
 	}
 }
 
@@ -117,17 +122,20 @@ func NewDefaultHandler() Handler {
 // StartServers starts all the variadic given servers and blocks the main thread.
 func (h *handler) StartServers(servers map[string]handlers_model.Server) {
 	h.makeSrvChan(len(servers))
+	h.serverMapping = servers
 	signal.Notify(h.srvChan.stopSig, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
-	for _, s := range servers {
+	for sName, s := range servers {
+		log.Printf("starting server: %v\n", sName)
 		h.goPool.wg.Add(1)
-		go func(s handlers_model.Server) {
+		go func(sName string, s handlers_model.Server) {
 			defer h.handlePanic()
 			defer h.goPool.wg.Done()
 
+			log.Printf("started server: %v\n", sName)
 			if err := s.Start(); err != nil {
 				h.handleErr(err)
 			}
-		}(s)
+		}(sName, s)
 		time.Sleep(time.Millisecond * 50)
 	}
 
@@ -154,15 +162,14 @@ func (h *handler) handleServer() {
 			return
 		case <-h.ctx.Done():
 			log.Println("\nctx server sig!!")
-			h.handleShutdown()
-			h.osExit(0)
-			return
+			h.srvChan.errSig <- h.ctx.Err()
 		}
 	}
 }
 
 func (h *handler) handleShutdown() {
-	h.Cancel()
+	h.stopServers()
+	h.cancel()
 	h.sigKill()
 	h.handleWaiting()
 	h.closeSrvSigChan()
@@ -172,6 +179,12 @@ func (h *handler) handleShutdown() {
 	h.profiler.pprof.Stop()
 }
 
-func (h *handler) Cancel() {
+func (h *handler) cancel() {
+	log.Println("cancelling all contexts")
 	h.cancelFn()
+	log.Println("all contexts cancelled")
+}
+
+func (h *handler) Cancel() {
+	h.cancel()
 }

@@ -10,3 +10,7 @@ func (ms *MockedPanicServer) Start() error {
 	log.Panic("panic starting the server")
 	return nil
 }
+
+func (ms *MockedPanicServer) Stop() {
+	log.Println("stop called")
+}

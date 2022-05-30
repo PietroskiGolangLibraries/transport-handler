@@ -1,7 +1,7 @@
 package stack_tracer
 
 import (
-	"fmt"
+	"log"
 	"runtime"
 
 	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/tracer"
@@ -21,5 +21,5 @@ func NewGST() tracer_models.Tracer {
 }
 
 func (goroutineStackTracer) Trace() {
-	fmt.Printf("running goroutine number: %v\n", runtime.NumGoroutine())
+	log.Printf("tracer - goroutine count: %v\n", runtime.NumGoroutine())
 }

@@ -2,10 +2,33 @@ package transporthandler
 
 import (
 	"context"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/handlers"
 	"log"
 	"os/signal"
 	"syscall"
 )
+
+func (h *handler) stopServers() {
+	for srvName, srv := range h.serverMapping {
+		if srv == nil {
+			continue
+		}
+
+		h.goPool.wg.Add(1)
+		go func(srvName string, srv handlers_model.Server) {
+			defer h.handleStopPanic()
+			defer h.goPool.wg.Done()
+
+			h.stopCall(srvName, srv)
+		}(srvName, srv)
+	}
+}
+
+func (h *handler) stopCall(srvName string, srv handlers_model.Server) {
+	log.Printf("stopping server: %v\n", srvName)
+	srv.Stop()
+	log.Printf("stopped server: %v\n", srvName)
+}
 
 func (h *handler) makeSrvChan(srvLen int) {
 	h.srvChan = srvChan{
@@ -76,6 +99,12 @@ func (h *handler) handlePanic() {
 			h.srvChan.panicSig <- true
 			log.Println("post-panic")
 		}
+	}
+}
+
+func (h *handler) handleStopPanic() {
+	if r := recover(); r != nil {
+		log.Printf("recovering from stopping runtime panic: %v", r)
 	}
 }
 

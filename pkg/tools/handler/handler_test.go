@@ -200,7 +200,7 @@ func Test_handler_StartServers(t *testing.T) {
 				mockedExiter *mocked_exiter.MockExiter,
 			) {
 				mockedProfiler.EXPECT().Stop().Times(1).Return()
-				mockedExiter.EXPECT().Exit(0).Times(1).Return()
+				mockedExiter.EXPECT().Exit(1).Times(1).Return()
 			},
 			assertion: func(h Handler) {
 				wg := &sync.WaitGroup{}
