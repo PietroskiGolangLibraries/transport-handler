@@ -10,9 +10,9 @@ import (
 
 func (h *handler) stopServers() {
 	for srvName, srv := range h.serverMapping {
-		if srv == nil {
-			continue
-		}
+		//if srv == nil {
+		//	continue
+		//}
 
 		h.goPool.wg.Add(1)
 		go func(srvName string, srv handlers_model.Server) {

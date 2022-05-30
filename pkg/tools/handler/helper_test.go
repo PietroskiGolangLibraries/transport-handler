@@ -2,6 +2,9 @@ package transporthandler
 
 import (
 	"context"
+	"github.com/stretchr/testify/require"
+	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/profiling/pprof/fake"
+	"log"
 	"sync"
 	"testing"
 
@@ -83,6 +86,81 @@ func Test_handler_handleCloseChanPanic(t *testing.T) {
 			tt.stubs(mockedProfiler, mockedExiter)
 			h := tt.setup(mockedProfiler, mockedExiter)
 			tt.assertion(h)
+		})
+	}
+}
+
+func Test_handler_handleStopPanic(t *testing.T) {
+	t.Run(
+		"it panics but recovers",
+		func(t *testing.T) {
+			h := &handler{}
+			defer h.handleStopPanic()
+			panic("any-panic")
+		},
+	)
+
+	t.Run(
+		"does not panic neither recovers",
+		func(t *testing.T) {
+			h := &handler{}
+			defer h.handleStopPanic()
+		},
+	)
+}
+
+func Test_handleCtxGen(t *testing.T) {
+	fakepprof := fakepprof.NewFakePProfProfiler()
+	var exiter = func(i int) {
+		log.Printf("exiting with code: %v", i)
+	}
+	tests := []struct {
+		name      string
+		setup     func() (context.Context, context.CancelFunc)
+		assertion func(context.Context, context.CancelFunc)
+	}{
+		{
+			name: "ctx and cancelFn as not nil",
+			setup: func() (context.Context, context.CancelFunc) {
+				ctx, cancelFn := context.WithCancel(context.Background())
+				return ctx, cancelFn
+			},
+			assertion: func(ctx context.Context, cancelFunc context.CancelFunc) {
+				require.NotNil(t, ctx)
+				require.NotNil(t, cancelFunc)
+				h := NewHandler(ctx, cancelFunc, fakepprof, exiter)
+				require.NotNil(t, h)
+			},
+		},
+		{
+			name: "ctx and cancelFn as nil",
+			setup: func() (context.Context, context.CancelFunc) {
+				return nil, nil
+			},
+			assertion: func(ctx context.Context, cancelFunc context.CancelFunc) {
+				require.Nil(t, ctx)
+				require.Nil(t, cancelFunc)
+				h := NewHandler(ctx, cancelFunc, fakepprof, exiter)
+				require.NotNil(t, h)
+			},
+		},
+		{
+			name: "ctx not will but cancelFn as nil",
+			setup: func() (context.Context, context.CancelFunc) {
+				ctx := context.Background()
+				return ctx, nil
+			},
+			assertion: func(ctx context.Context, cancelFunc context.CancelFunc) {
+				require.NotNil(t, ctx)
+				require.Nil(t, cancelFunc)
+				h := NewHandler(ctx, cancelFunc, fakepprof, exiter)
+				require.NotNil(t, h)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.assertion(tt.setup())
 		})
 	}
 }
