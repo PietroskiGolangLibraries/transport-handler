@@ -1,7 +1,7 @@
 package deprecated_worker
 
 import (
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/handlers"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 	"sync"
 )
 

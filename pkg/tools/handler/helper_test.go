@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/os/exit"
-	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/profiling/pprof"
-	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/tools/tracer/stack"
+	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/os/exit"
+	mocked_profiler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/profiling/pprof"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/tools/tracer/stack"
 )
 
 func Test_handler_handleCloseChanPanic(t *testing.T) {

@@ -1,10 +1,10 @@
 package main
 
 import (
-	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/mocks/handlers"
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/handlers"
-	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/tools/handler"
-	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/tools/tracer/stack"
+	mocked_transport_handlers "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/handlers"
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
+	transporthandler "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/tools/handler"
+	stack_tracer "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/tools/tracer/stack"
 )
 
 func main() {

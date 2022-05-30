@@ -5,7 +5,7 @@ package fakepprof
 import (
 	"log"
 
-	prof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3/pkg/models/profiler"
+	prof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/profiler"
 )
 
 type (

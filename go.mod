@@ -1,4 +1,4 @@
-module gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v3
+module gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4
 
 go 1.18
 
