@@ -27,6 +27,4 @@ profiling
 !docs/reports/profiling
 
 # general local generated reports
-.pdf
-
-
+*.pdf

@@ -1,8 +1,9 @@
 package deprecated_worker
 
 import (
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 	"sync"
+
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 )
 
 type handler struct {

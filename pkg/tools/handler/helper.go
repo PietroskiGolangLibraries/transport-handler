@@ -2,10 +2,11 @@ package transporthandler
 
 import (
 	"context"
-	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 	"log"
 	"os/signal"
 	"syscall"
+
+	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 )
 
 func (h *handler) stopServers() {

@@ -4,13 +4,14 @@ package transporthandler
 
 import (
 	"context"
-	"github.com/pkg/profile"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/pkg/profile"
 
 	handlers_model "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/handlers"
 	tracer_models "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/models/tracer"

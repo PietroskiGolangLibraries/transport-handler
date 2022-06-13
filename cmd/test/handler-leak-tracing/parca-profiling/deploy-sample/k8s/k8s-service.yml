@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service # Type of kubernetes resource
+metadata:
+  labels:
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/instance: parca-hello-world-service
+    app.kubernetes.io/name: parca-hello-world-service
+    app.kubernetes.io/version: v0.11.1
+  name: parca-hello-world-service # Name of the resource
+spec:
+  type: ClusterIP # LoadBalancer, NodePort - A port is opened on each node in your cluster via Kube proxy.
+  ports: # Take incoming HTTP requests on port 9090 and forward them to the targetPort of 8080
+    - name: http
+      #      nodePort: 32032
+      port: 8080 # 9090
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/instance: parca
+    app.kubernetes.io/name: parca-hello-world
+    name: parca-hello-world # Map any pod with label `app=parca-hello-world` to this service

@@ -2,11 +2,12 @@ package transporthandler
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
-	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/profiling/pprof/fake"
 	"log"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	fakepprof "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/profiling/pprof/fake"
 
 	"github.com/golang/mock/gomock"
 	mocked_exiter "gitlab.com/pietroski-software-company/load-test/gotest/pkg/transport-handler/v4/pkg/mocks/os/exit"
